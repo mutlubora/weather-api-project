@@ -1,6 +1,7 @@
 package com.skyapi.weatherforecast.location;
 
 
+import com.skyapi.weatherforecast.common.DailyWeather;
 import com.skyapi.weatherforecast.common.HourlyWeather;
 import com.skyapi.weatherforecast.common.Location;
 import com.skyapi.weatherforecast.common.RealtimeWeather;
@@ -152,7 +153,37 @@ public class LocationRepositoryTest {
 
     }
 
+    @Test
+    public void testAddDailyWeatherData() {
+        Location location = locationRepository.findById("DELHI_IN").get();
 
+        List<DailyWeather> listDailyWeather = location.getListDailyWeather();
+
+        DailyWeather forecast1 = new DailyWeather()
+                .location(location)
+                .dayOfMonth(16)
+                .month(7)
+                .minTemp(25)
+                .maxTemp(33)
+                .precipitation(20)
+                .status("Sunny");
+
+        DailyWeather forecast2 = new DailyWeather()
+                .location(location)
+                .dayOfMonth(17)
+                .month(7)
+                .minTemp(26)
+                .maxTemp(34)
+                .precipitation(10)
+                .status("Clear");
+
+        listDailyWeather.add(forecast1);
+        listDailyWeather.add(forecast2);
+
+        Location updatedLocation = locationRepository.save(location);
+
+        assertThat(updatedLocation.getListDailyWeather()).isNotEmpty();
+    }
 
 
 
