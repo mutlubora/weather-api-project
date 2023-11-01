@@ -149,7 +149,7 @@ public class FullWeatherControllerTest {
 
 
         LocationNotFoundException ex = new LocationNotFoundException(locationCode);
-        when(fullWeatherService.getByLocationCode(locationCode)).thenThrow(ex);
+        when(fullWeatherService.get(locationCode)).thenThrow(ex);
 
         mockMvc.perform(get(requestURI))
                 .andExpect(status().isNotFound())
@@ -213,7 +213,7 @@ public class FullWeatherControllerTest {
         location.setListHourlyWeather(List.of(hourlyForecast1, hourlyForecast2));
 
 
-        when(fullWeatherService.getByLocationCode(locationCode)).thenReturn(location);
+        when(fullWeatherService.get(locationCode)).thenReturn(location);
 
         String expectedLocation = location.toString();
 
@@ -233,6 +233,18 @@ public class FullWeatherControllerTest {
         String requestURI = END_POINT_PATH + "/" + locationCode;
 
         FullWeatherDTO fullWeatherDTO = new FullWeatherDTO();
+
+
+        RealtimeWeatherDTO realtimeWeather = new RealtimeWeatherDTO();
+        realtimeWeather.setStatus("Cloudy");
+        realtimeWeather.setPrecipitation(88);
+        realtimeWeather.setHumidity(32);
+        realtimeWeather.setTemperature(12);
+        realtimeWeather.setWindSpeed(5);
+        realtimeWeather.setLastUpdated(new Date());
+
+        fullWeatherDTO.setRealtimeWeather(realtimeWeather);
+
 
         String requestBody = objectMapper.writeValueAsString(fullWeatherDTO);
 

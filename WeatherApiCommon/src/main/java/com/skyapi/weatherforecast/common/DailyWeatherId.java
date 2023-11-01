@@ -5,6 +5,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @Embeddable
 public class DailyWeatherId implements Serializable {
@@ -46,5 +47,17 @@ public class DailyWeatherId implements Serializable {
 
     public void setLocation(Location location) {
         this.location = location;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DailyWeatherId that)) return false;
+        return getDayOfMonth() == that.getDayOfMonth() && getMonth() == that.getMonth() && Objects.equals(getLocation(), that.getLocation());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getDayOfMonth(), getMonth(), getLocation());
     }
 }

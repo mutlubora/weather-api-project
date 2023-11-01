@@ -1,5 +1,6 @@
 package com.skyapi.weatherforecast.location;
 
+import com.skyapi.weatherforecast.AbstractLocationService;
 import com.skyapi.weatherforecast.common.Location;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -9,10 +10,10 @@ import java.util.List;
 
 @Service
 @Transactional
-public class LocationService {
-    private final LocationRepository locationRepository;
+public class LocationService extends AbstractLocationService {
 
     public LocationService(LocationRepository locationRepository) {
+        super();
         this.locationRepository = locationRepository;
     }
 
@@ -24,15 +25,6 @@ public class LocationService {
         return locationRepository.findUntrashed();
     }
 
-    public Location get(String code){
-        Location location = locationRepository.findByCode(code);
-
-        if (location == null) {
-            throw new LocationNotFoundException(code);
-        }
-
-        return location;
-    }
 
     public Location update(Location locationInRequest){
 
@@ -43,11 +35,7 @@ public class LocationService {
             throw new LocationNotFoundException(code);
         }
 
-        locationInDB.setCountryCode(locationInRequest.getCountryCode());
-        locationInDB.setCountryName(locationInRequest.getCountryName());
-        locationInDB.setRegionName(locationInRequest.getRegionName());
-        locationInDB.setCityName(locationInRequest.getCityName());
-        locationInDB.setEnabled(locationInRequest.isEnabled());
+        locationInDB.copyFieldsFrom(locationInRequest);
 
         return locationRepository.save(locationInDB);
     }
