@@ -1,5 +1,9 @@
 package com.skyapi.weatherforecast;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.skyapi.weatherforecast.common.DailyWeather;
 import com.skyapi.weatherforecast.common.HourlyWeather;
 import com.skyapi.weatherforecast.common.Location;
@@ -17,9 +21,7 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 public class WeatherApiServiceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(WeatherApiServiceApplication.class, args);
-	}
+
 
 	@Bean
 	public ModelMapper getModelMapper() {
@@ -66,6 +68,17 @@ public class WeatherApiServiceApplication {
 				.addMapping(HourlyWeatherDTO::getHourOfDay, (dest, value) -> {
 					dest.getId().setHourOfDay(value != null ? (Integer) value : 0);
 		});
+	}
+
+	@Bean
+	public ObjectMapper getObjectMapper() {
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+		return objectMapper;
+	}
+	public static void main(String[] args) {
+		SpringApplication.run(WeatherApiServiceApplication.class, args);
 	}
 
 }

@@ -12,7 +12,6 @@ import java.util.List;
 
 public class FullWeatherDTO {
     private String location;
-    @JsonProperty("realtime_weather")
     @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = RealtimeWeatherFieldFilter.class)
     @Valid
     private RealtimeWeatherDTO realtimeWeather = new RealtimeWeatherDTO();

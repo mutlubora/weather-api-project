@@ -26,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class RealtimeWeatherControllerTest {
 
     private static final String END_POINT_PATH = "/v1/realtime";
+    private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";
+    private static final String REQUEST_CONTENT_TYPE = "application/json";
 
     @Autowired
     private MockMvc mockMvc;
@@ -95,8 +97,12 @@ public class RealtimeWeatherControllerTest {
 
         mockMvc.perform(get(END_POINT_PATH))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$.location", is(expectedLocation)))
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/realtime")))
+                .andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly")))
+                .andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily")))
+                .andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full")))
                 .andDo(print());
     }
 
@@ -146,8 +152,12 @@ public class RealtimeWeatherControllerTest {
 
         mockMvc.perform(get(requestURI))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$.location", is(expectedLocation)))
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/realtime/" + locationCode)))
+                .andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + locationCode)))
+                .andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+                .andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
                 .andDo(print());
     }
 
@@ -165,7 +175,7 @@ public class RealtimeWeatherControllerTest {
 
         String bodyContent = mapper.writeValueAsString(dto);
 
-        mockMvc.perform(put(requestURI).contentType("application/json").content(bodyContent))
+        mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isBadRequest())
                 .andDo(print());
     }
@@ -189,7 +199,7 @@ public class RealtimeWeatherControllerTest {
 
         String bodyContent = mapper.writeValueAsString(dto);
 
-        mockMvc.perform(put(requestURI).contentType("application/json").content(bodyContent))
+        mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors.error", is(ex.getMessage())))
                 .andDo(print());
@@ -233,9 +243,14 @@ public class RealtimeWeatherControllerTest {
         String expectedLocation = location.getCityName() + ", "
                 + location.getRegionName() + ", " + location.getCountryName();
 
-        mockMvc.perform(put(requestURI).contentType("application/json").content(bodyContent))
+        mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.location", is(expectedLocation)))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/realtime/" + locationCode)))
+                .andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + locationCode)))
+                .andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+                .andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
                 .andDo(print());
     }
 }

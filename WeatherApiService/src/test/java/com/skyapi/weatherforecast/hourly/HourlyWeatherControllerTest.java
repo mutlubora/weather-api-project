@@ -11,14 +11,11 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,6 +27,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class HourlyWeatherControllerTest {
     private static final String END_POINT_PATH = "/v1/hourly";
     public static final String X_CURRENT_HOUR = "X-Current-Hour";
+    private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";
+    private static final String REQUEST_CONTENT_TYPE = "application/json";
 
     @Autowired
     private MockMvc mockMvc;
@@ -113,9 +112,13 @@ public class HourlyWeatherControllerTest {
 
         mockMvc.perform(get(END_POINT_PATH).header(X_CURRENT_HOUR, String.valueOf(currentHour)))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$.location", is(expectedLocation)))
                 .andExpect(jsonPath("$.hourly_forecast[0].hour_of_day", is(10 )))
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/hourly")))
+                .andExpect(jsonPath("$._links.realtime_weather.href", is("http://localhost/v1/realtime")))
+                .andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily")))
+                .andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full")))
                 .andDo(print());
     }
 
@@ -193,9 +196,13 @@ public class HourlyWeatherControllerTest {
 
         mockMvc.perform(get(requestURI).header(X_CURRENT_HOUR, String.valueOf(currentHour)))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$.location", is(expectedLocation)))
                 .andExpect(jsonPath("$.hourly_forecast[0].hour_of_day", is(10 )))
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/hourly/" + locationCode)))
+                .andExpect(jsonPath("$._links.realtime_weather.href", is("http://localhost/v1/realtime/" + locationCode)))
+                .andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+                .andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
                 .andDo(print());
     }
 
@@ -206,7 +213,7 @@ public class HourlyWeatherControllerTest {
         List<HourlyWeatherDTO> listDTO = Collections.emptyList();
 
         String requestBody = objectMapper.writeValueAsString(listDTO);
-        mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(requestBody))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.error", is("Hourly forecast data cannot be empty.")))
                 .andDo(print());
@@ -232,7 +239,7 @@ public class HourlyWeatherControllerTest {
 
         String requestBody = objectMapper.writeValueAsString(listDTO);
 
-        mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(requestBody))
                 .andExpect(status().isBadRequest())
                 .andDo(print());
     }
@@ -255,7 +262,7 @@ public class HourlyWeatherControllerTest {
 
         String requestBody = objectMapper.writeValueAsString(listDTO);
 
-        mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(requestBody))
                 .andExpect(status().isNotFound())
                 .andDo(print());
     }
@@ -307,10 +314,14 @@ public class HourlyWeatherControllerTest {
 
         String requestBody = objectMapper.writeValueAsString(listDTO);
 
-        mockMvc.perform(put(requestURI).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        mockMvc.perform(put(requestURI).contentType(REQUEST_CONTENT_TYPE).content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.location",is(location.toString())))
                 .andExpect(jsonPath("$.hourly_forecast[0].hour_of_day",is(dto1.getHourOfDay())))
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost/v1/hourly/" + locationCode)))
+                .andExpect(jsonPath("$._links.realtime_weather.href", is("http://localhost/v1/realtime/" + locationCode)))
+                .andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + locationCode)))
+                .andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + locationCode)))
                 .andDo(print());
     }
 }

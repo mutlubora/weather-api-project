@@ -6,7 +6,11 @@ import com.skyapi.weatherforecast.GeolocationException;
 import com.skyapi.weatherforecast.GeolocationService;
 import com.skyapi.weatherforecast.common.HourlyWeather;
 import com.skyapi.weatherforecast.common.Location;
+import com.skyapi.weatherforecast.daily.DailyWeatherController;
+import com.skyapi.weatherforecast.full.FullWeatherController;
 import com.skyapi.weatherforecast.location.LocationNotFoundException;
+import com.skyapi.weatherforecast.realtime.RealtimeWeatherController;
+import com.skyapi.weatherforecast.realtime.RealtimeWeatherDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
@@ -16,6 +20,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/v1/hourly")
@@ -45,7 +52,9 @@ public class HourlyWeatherController {
                return ResponseEntity.noContent().build();
             }
 
-            return ResponseEntity.ok(listEntity2DTO(hourlyForecast));
+            HourlyWeatherListDTO dto = listEntity2DTO(hourlyForecast);
+
+            return ResponseEntity.ok(addLinksByIP(dto));
 
         } catch (NumberFormatException | GeolocationException e) {
             return ResponseEntity.badRequest().build();
@@ -67,8 +76,9 @@ public class HourlyWeatherController {
             if (hourlyForecast.isEmpty()) {
                 return ResponseEntity.noContent().build();
             }
+            HourlyWeatherListDTO dto = listEntity2DTO(hourlyForecast);
 
-            return ResponseEntity.ok(listEntity2DTO(hourlyForecast));
+            return ResponseEntity.ok(addLinksByLocation(dto, locationCode));
 
         } catch (NumberFormatException e) {
             return ResponseEntity.badRequest().build();
@@ -91,7 +101,9 @@ public class HourlyWeatherController {
             List<HourlyWeather> updatedHourlyWeather =
                     hourlyWeatherService.updateByLocationCode(locationCode, listHourlyWeathers);
 
-            return ResponseEntity.ok(listEntity2DTO(updatedHourlyWeather));
+            HourlyWeatherListDTO updatedDto = listEntity2DTO(updatedHourlyWeather);
+
+            return ResponseEntity.ok(addLinksByLocation(updatedDto, locationCode));
 
         } catch (LocationNotFoundException e) {
             return ResponseEntity.notFound().build();
@@ -123,5 +135,37 @@ public class HourlyWeatherController {
         return listDTO;
     }
 
+    private HourlyWeatherListDTO addLinksByIP(HourlyWeatherListDTO dto) {
 
+        dto.add(linkTo(
+                methodOn(HourlyWeatherController.class).listHourlyForecastByIPAddress(null))
+                .withSelfRel());
+        dto.add(linkTo(
+                methodOn(RealtimeWeatherController.class).getRealtimeWeatherByIPAddress(null))
+                .withRel("realtime_weather"));
+        dto.add(linkTo(
+                methodOn(DailyWeatherController.class).listDailyForecastByIPAddress(null))
+                .withRel("daily_forecast"));
+        dto.add(linkTo(
+                methodOn(FullWeatherController.class).getFullWeatherByIPAddress(null))
+                .withRel("full_forecast"));
+        return dto;
+    }
+
+    private HourlyWeatherListDTO addLinksByLocation(HourlyWeatherListDTO dto, String locationCode) {
+
+        dto.add(linkTo(
+                methodOn(HourlyWeatherController.class).listHourlyForecastByLocationCode(locationCode, null))
+                .withSelfRel());
+        dto.add(linkTo(
+                methodOn(RealtimeWeatherController.class).getRealtimeWeatherByLocationCode(locationCode))
+                .withRel("realtime_weather"));
+        dto.add(linkTo(
+                methodOn(DailyWeatherController.class).listDailyForecastByLocationCode(locationCode))
+                .withRel("daily_forecast"));
+        dto.add(linkTo(
+                methodOn(FullWeatherController.class).getFullWeatherByLocationCode(locationCode))
+                .withRel("full_forecast"));
+        return dto;
+    }
 }

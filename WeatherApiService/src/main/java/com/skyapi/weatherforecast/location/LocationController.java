@@ -67,7 +67,7 @@ public class LocationController {
 
     }
 
-    private LocationDTO entity2DTO(Location entity) {
+    private LocationDTO entity2DTO(Location entity)  {
         return modelMapper.map(entity, LocationDTO.class);
     }
 

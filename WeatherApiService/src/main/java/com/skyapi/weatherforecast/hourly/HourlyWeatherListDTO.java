@@ -1,14 +1,14 @@
 package com.skyapi.weatherforecast.hourly;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.hateoas.RepresentationModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class HourlyWeatherListDTO {
+public class HourlyWeatherListDTO extends RepresentationModel<HourlyWeatherListDTO> {
     private String location;
 
-    @JsonProperty("hourly_forecast")
     private List<HourlyWeatherDTO> hourlyForecast = new ArrayList<>();
 
     public String getLocation() {
