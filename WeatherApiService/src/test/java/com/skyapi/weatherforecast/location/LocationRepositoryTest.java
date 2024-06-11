@@ -5,11 +5,16 @@ import com.skyapi.weatherforecast.common.DailyWeather;
 import com.skyapi.weatherforecast.common.HourlyWeather;
 import com.skyapi.weatherforecast.common.Location;
 import com.skyapi.weatherforecast.common.RealtimeWeather;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 
 import java.util.Date;
@@ -42,12 +47,52 @@ public class LocationRepositoryTest {
     }
 
     @Test
+    @Disabled
     public void testListSuccess() {
         List<Location> locations = locationRepository.findUntrashed();
 
         assertThat(locations).isNotEmpty();
 
         locations.forEach(System.out::println);
+    }
+
+    @Test
+    public void testListFirstPage() {
+        int pageSize = 5;
+        int pageNum = 0;
+
+        Pageable pageable = PageRequest.of(pageNum, pageSize);
+        Page<Location> page = locationRepository.findUntrashed(pageable);
+
+        assertThat(page).size().isEqualTo(pageSize);
+
+        page.forEach(System.out::println);
+    }
+
+    @Test
+    public void testListPageNoContent() {
+        int pageSize = 5;
+        int pageNum = 10;
+
+        Pageable pageable = PageRequest.of(pageNum, pageSize);
+        Page<Location> page = locationRepository.findUntrashed(pageable);
+
+        assertThat(page).isEmpty();
+    }
+
+    @Test
+    public void testList2ndPageWithSort() {
+        int pageSize = 5;
+        int pageNum = 0;
+
+        Sort sort = Sort.by("code").descending();
+
+        Pageable pageable = PageRequest.of(pageNum, pageSize, sort);
+        Page<Location> page = locationRepository.findUntrashed(pageable);
+
+        assertThat(page).size().isEqualTo(pageSize);
+
+        page.forEach(System.out::println);
     }
 
     @Test

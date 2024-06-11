@@ -1,6 +1,8 @@
 package com.skyapi.weatherforecast.location;
 
 import com.skyapi.weatherforecast.common.Location;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,7 +14,11 @@ import java.util.List;
 public interface LocationRepository extends JpaRepository<Location, String> {
 
     @Query("SELECT l FROM Location l WHERE l.trashed = false")
+    @Deprecated
     List<Location> findUntrashed();
+
+    @Query("SELECT l FROM Location l WHERE l.trashed = false")
+    Page<Location> findUntrashed(Pageable pageable);
 
     @Query("SELECT l FROM Location l WHERE l.code = ?1 AND l.trashed = false")
     Location findByCode(String code);
