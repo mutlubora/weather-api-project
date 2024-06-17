@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(FullWeatherController.class)
-public class FullWeatherControllerTest {
+public class FullWeatherControllerTests {
     private static final String END_POINT_PATH = "/v1/full";
     private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";
     private static final String REQUEST_CONTENT_TYPE = "application/json";

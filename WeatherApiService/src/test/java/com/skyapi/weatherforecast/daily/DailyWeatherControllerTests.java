@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 @WebMvcTest(DailyWeatherController.class)
-public class DailyWeatherControllerTest {
+public class DailyWeatherControllerTests {
     private static final String END_POINT_PATH = "/v1/daily";
     private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";
     private static final String REQUEST_CONTENT_TYPE = "application/json";

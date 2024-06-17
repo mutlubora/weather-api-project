@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RealtimeWeatherController.class)
-public class RealtimeWeatherControllerTest {
+public class RealtimeWeatherControllerTests {
 
     private static final String END_POINT_PATH = "/v1/realtime";
     private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";

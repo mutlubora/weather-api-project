@@ -26,8 +26,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(LocationController.class)
-public class LocationControllerTest {
+public class LocationControllerTests {
     private static final String END_POINT_PATH = "/v1/locations";
+    private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";
+    private static final String REQUEST_CONTENT_TYPE = "application/json";
 
     @Autowired
     private MockMvc mockMvc;
@@ -45,7 +47,7 @@ public class LocationControllerTest {
         String bodyContent = mapper.writeValueAsString(location);
 
         mockMvc.perform(post(END_POINT_PATH)
-                .contentType("application/json")
+                .contentType(REQUEST_CONTENT_TYPE)
                 .content(bodyContent))
                 .andExpect(status().isBadRequest())
                 .andDo(print());
@@ -53,8 +55,9 @@ public class LocationControllerTest {
 
     @Test
     public void testAddShouldReturn201Created() throws Exception {
+        String code = "NYC_USA";
         Location location = new Location();
-        location.setCode("NYC_USA");
+        location.setCode(code);
         location.setCityName("New York City");
         location.setRegionName("New York");
         location.setCountryCode("US");
@@ -74,14 +77,17 @@ public class LocationControllerTest {
 
         String bodyContent = mapper.writeValueAsString(dto);
 
-        mockMvc.perform(post(END_POINT_PATH)
-                        .contentType("application/json")
-                        .content(bodyContent))
+        mockMvc.perform(post(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.code", is("NYC_USA")))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
+                .andExpect(jsonPath("$.code", is(code)))
                 .andExpect(jsonPath("$.city_name", is("New York City")))
-                .andExpect(header().string("Location", "/v1/locations/NYC_USA"))
+                .andExpect(header().string("Location", END_POINT_PATH + "/" + code))
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost" + END_POINT_PATH + "/" + code)))
+                .andExpect(jsonPath("$._links.realtime_weather.href", is("http://localhost/v1/realtime/" + code)))
+                .andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + code)))
+                .andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + code)))
+                .andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + code)))
                 .andDo(print());
     }
 
@@ -96,7 +102,7 @@ public class LocationControllerTest {
 
         String bodyContent = mapper.writeValueAsString(location);
 
-        mockMvc.perform(post(END_POINT_PATH).contentType("application/json").content(bodyContent))
+        mockMvc.perform(post(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.errors.code", is("Location code can not be null")))
@@ -115,9 +121,9 @@ public class LocationControllerTest {
 
         String bodyContent = mapper.writeValueAsString(location);
 
-        mockMvc.perform(post(END_POINT_PATH).contentType("application/json").content(bodyContent))
+        mockMvc.perform(post(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentType("application/json"))
+                .andExpect(content().contentType(REQUEST_CONTENT_TYPE))
                 .andExpect(jsonPath("$.errors.code", is("Location code must have 3-12 characters")))
                 .andDo(print());
     }
@@ -129,9 +135,9 @@ public class LocationControllerTest {
 
         String bodyContent = mapper.writeValueAsString(location);
 
-        MvcResult mvcResult = mockMvc.perform(post(END_POINT_PATH).contentType("application/json").content(bodyContent))
+        MvcResult mvcResult = mockMvc.perform(post(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentType("application/json"))
+                .andExpect(content().contentType(REQUEST_CONTENT_TYPE))
                 .andDo(print())
                 .andReturn();
 
@@ -177,7 +183,7 @@ public class LocationControllerTest {
 
         mockMvc.perform(get(END_POINT_PATH))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json"))
+                .andExpect(content().contentType(REQUEST_CONTENT_TYPE))
                 .andExpect(jsonPath("$[0].code", is("NYC_USA")))
                 .andExpect(jsonPath("$[0].city_name", is("New York City")))
                 .andExpect(jsonPath("$[1].code", is("LACA_USA")))
@@ -187,7 +193,7 @@ public class LocationControllerTest {
 
     @Test
     public void testListByPageShouldReturn204NoContent() throws Exception {
-        Mockito.when(locationService.listByPage(anyInt(), anyInt(), Mockito.anyString()))
+        Mockito.when(locationService.listByPage(anyInt(), anyInt(), anyString(), anyMap()))
                 .thenReturn(Page.empty());
 
         mockMvc.perform(get(END_POINT_PATH))
@@ -221,11 +227,11 @@ public class LocationControllerTest {
         int totalElements = listLocations.size();
 
         Sort sort = Sort.by(sortField);
-        Pageable pageable = PageRequest.of(pageNum, pageSize, sort);
+        Pageable pageable = PageRequest.of(pageNum-1, pageSize, sort);
 
         Page<Location> page = new PageImpl<>(listLocations, pageable, totalElements);
 
-        Mockito.when(locationService.listByPage(pageNum - 1, pageSize, sortField))
+        Mockito.when(locationService.listByPage(anyInt(), anyInt(), anyString(), anyMap()))
                 .thenReturn(page);
 
         String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -233,12 +239,12 @@ public class LocationControllerTest {
 
         mockMvc.perform(get(requestURI))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/hal+json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$._embedded.locations[0].code", is("NYC_USA")))
                 .andExpect(jsonPath("$._embedded.locations[0].city_name", is("New York City")))
                 .andExpect(jsonPath("$._embedded.locations[1].code", is("LACA_USA")))
                 .andExpect(jsonPath("$._embedded.locations[1].city_name", is("Los Angeles")))
-                .andExpect(jsonPath("$.page.size", is(pageSize+1)))
+                .andExpect(jsonPath("$.page.size", is(pageSize)))
                 .andExpect(jsonPath("$.page.number", is(pageNum)))
                  .andDo(print());
     }
@@ -260,14 +266,14 @@ public class LocationControllerTest {
 
         Page<Location> page = new PageImpl<>(listLocations, pageable, totalElements);
 
-        Mockito.when(locationService.listByPage(pageNum -1, pageSize, sortField)).thenReturn(page);
+        Mockito.when(locationService.listByPage(anyInt(), anyInt(), anyString(), anyMap())).thenReturn(page);
 
         String hostName = "http://localhost";
         String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
 
         mockMvc.perform(get(requestURI))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/hal+json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$._links.self.href", containsString(hostName + requestURI)))
                 .andExpect(jsonPath("$._links.first").doesNotExist())
                 .andExpect(jsonPath("$._links.next").doesNotExist())
@@ -298,7 +304,7 @@ public class LocationControllerTest {
 
         Page<Location> page = new PageImpl<>(listLocations, pageable, totalElements);
 
-        Mockito.when(locationService.listByPage(pageNum - 1, pageSize, sortField)).thenReturn(page);
+        Mockito.when(locationService.listByPage(anyInt(), anyInt(), anyString(), anyMap())).thenReturn(page);
 
         String hostName = "http://localhost";
         String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -308,7 +314,7 @@ public class LocationControllerTest {
 
         mockMvc.perform(get(requestURI))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/hal+json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$._links.first").doesNotExist())
                 .andExpect(jsonPath("$._links.next.href", containsString(hostName + nextPageURI)))
                 .andExpect(jsonPath("$._links.prev").doesNotExist())
@@ -336,7 +342,7 @@ public class LocationControllerTest {
 
         Page<Location> page = new PageImpl<>(listLocations, pageable, totalElements);
 
-        Mockito.when(locationService.listByPage(pageNum - 1, pageSize, sortField)).thenReturn(page);
+        Mockito.when(locationService.listByPage(anyInt(), anyInt(), anyString(), anyMap())).thenReturn(page);
 
         String hostName = "http://localhost";
         String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -348,7 +354,7 @@ public class LocationControllerTest {
 
         mockMvc.perform(get(requestURI))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/hal+json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$._links.first.href", containsString(hostName + firstPageURI)))
                 .andExpect(jsonPath("$._links.next.href", containsString(hostName + nextPageURI)))
                 .andExpect(jsonPath("$._links.prev.href", containsString(hostName + prevPageURI)))
@@ -376,7 +382,7 @@ public class LocationControllerTest {
 
         Page<Location> page = new PageImpl<>(listLocations, pageable, totalElements);
 
-        Mockito.when(locationService.listByPage(pageNum - 1, pageSize, sortField)).thenReturn(page);
+        Mockito.when(locationService.listByPage(anyInt(), anyInt(), anyString(), anyMap())).thenReturn(page);
 
         String hostName = "http://localhost";
         String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -386,7 +392,7 @@ public class LocationControllerTest {
 
         mockMvc.perform(get(requestURI))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/hal+json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$._links.first.href", containsString(hostName + firstPageURI)))
                 .andExpect(jsonPath("$._links.next").doesNotExist())
                 .andExpect(jsonPath("$._links.prev.href", containsString(hostName + prevPageURI)))
@@ -400,7 +406,7 @@ public class LocationControllerTest {
         int pageSize = 5;
         String sortField = "code";
 
-        Mockito.when(locationService.listByPage(pageNum,pageSize, sortField))
+        Mockito.when(locationService.listByPage(anyInt(), anyInt(), anyString(), anyMap()))
                 .thenReturn(Page.empty());
 
         String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -417,7 +423,7 @@ public class LocationControllerTest {
         int pageSize = 3;
         String sortField = "code";
 
-        Mockito.when(locationService.listByPage(pageNum,pageSize, sortField))
+        Mockito.when(locationService.listByPage(anyInt(), anyInt(), anyString(), anyMap()))
                 .thenReturn(Page.empty());
 
         String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -434,7 +440,7 @@ public class LocationControllerTest {
         int pageSize = 5;
         String sortField = "code_ABC";
 
-        Mockito.when(locationService.listByPage(pageNum,pageSize, sortField))
+        Mockito.when(locationService.listByPage(anyInt(), anyInt(), anyString(), anyMap()))
                 .thenReturn(Page.empty());
 
         String requestURI = END_POINT_PATH + "?page=" + pageNum + "&size=" + pageSize + "&sort=" + sortField;
@@ -483,7 +489,7 @@ public class LocationControllerTest {
 
         mockMvc.perform(get(requestURI))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$.code", is(code)))
                 .andExpect(jsonPath("$.city_name", is("Los Angeles")))
                 .andDo(print());
@@ -505,7 +511,7 @@ public class LocationControllerTest {
 
         String bodyContent = mapper.writeValueAsString(location);
 
-        mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
+        mockMvc.perform(put(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors.error", is(ex.getMessage())))
                 .andDo(print());
@@ -522,15 +528,16 @@ public class LocationControllerTest {
 
         String bodyContent = mapper.writeValueAsString(location);
 
-        mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
+        mockMvc.perform(put(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isBadRequest())
                 .andDo(print());
     }
 
     @Test
     public void testUpdateShouldReturn200OK() throws Exception {
+        String code = "NYC_USA";
         Location location = new Location();
-        location.setCode("NYC_USA");
+        location.setCode(code);
         location.setCityName("New York City");
         location.setRegionName("New York");
         location.setCountryCode("US");
@@ -548,11 +555,16 @@ public class LocationControllerTest {
         Mockito.when(locationService.update(location)).thenReturn(location);
         String bodyContent = mapper.writeValueAsString(dto);
 
-        mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
+        mockMvc.perform(put(END_POINT_PATH).contentType(REQUEST_CONTENT_TYPE).content(bodyContent))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json"))
+                .andExpect(content().contentType(RESPONSE_CONTENT_TYPE))
                 .andExpect(jsonPath("$.code", is("NYC_USA")))
                 .andExpect(jsonPath("$.city_name", is("New York City")))
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost" + END_POINT_PATH + "/" + code)))
+                .andExpect(jsonPath("$._links.realtime_weather.href", is("http://localhost/v1/realtime/" + code)))
+                .andExpect(jsonPath("$._links.hourly_forecast.href", is("http://localhost/v1/hourly/" + code)))
+                .andExpect(jsonPath("$._links.daily_forecast.href", is("http://localhost/v1/daily/" + code)))
+                .andExpect(jsonPath("$._links.full_forecast.href", is("http://localhost/v1/full/" + code)))
                 .andDo(print());
     }
 

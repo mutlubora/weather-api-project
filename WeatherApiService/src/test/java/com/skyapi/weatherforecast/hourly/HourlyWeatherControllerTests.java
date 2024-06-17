@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(HourlyWeatherController.class)
-public class HourlyWeatherControllerTest {
+public class HourlyWeatherControllerTests {
     private static final String END_POINT_PATH = "/v1/hourly";
     public static final String X_CURRENT_HOUR = "X-Current-Hour";
     private static final String RESPONSE_CONTENT_TYPE = "application/hal+json";

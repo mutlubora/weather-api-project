@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(MainController.class)
-public class MainControllerTest {
+public class MainControllerTests {
 
     private static final String BASE_URI = "/";
 
